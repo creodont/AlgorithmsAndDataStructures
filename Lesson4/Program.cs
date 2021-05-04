@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Lesson4
 {
@@ -135,12 +136,12 @@ namespace Lesson4
                         if (tmp.LeftChild != null)
                         {
                             tmp = tmp.LeftChild;
-                            tmp.LeftChild.Parrent = tmp;
                             continue;
                         }
                         else
                         {
                             tmp.LeftChild = new TreeNode { Value = value };
+                            tmp.LeftChild.Parrent = tmp;
                             //count++;
                             return;
                         }
@@ -152,7 +153,6 @@ namespace Lesson4
                 }
                 return;
             }
-
 
             public TreeNode GetNodeByValue(int value)
             {
@@ -166,7 +166,7 @@ namespace Lesson4
                 {
                     if (node.Value == value) return node;
 
-                    if (node.Value > value)
+                    if (node.Value < value)
                     {
                         node = node.RightChild;
                     }
@@ -186,18 +186,104 @@ namespace Lesson4
 
             public void PrintTree()
             {
-                throw new NotImplementedException();
+                if (Root != null)
+                {
+                    PreOrderTravers(Root);
+                }
+                else 
+                {
+                    Console.WriteLine("Дерево пустое");
+                }
+            }
+
+            private void PreOrderTravers(TreeNode root)
+            {
+                if (root != null)
+                {
+                    Console.Write($"{root.Value}");
+                    if (root.LeftChild != null || root.RightChild != null)
+                    {
+                        Console.Write("(");
+                        if (root.LeftChild != null) PreOrderTravers(root.LeftChild);
+                        else Console.Write("empty");
+
+                        Console.Write(",");
+
+                        if (root.RightChild != null) PreOrderTravers(root.RightChild);
+                        else Console.Write("empty");
+
+                        Console.Write(")");
+                    }
+                }
             }
 
             public void RemoveItem(int value)
             {
-                throw new NotImplementedException();
+                TreeNode node = GetNodeByValue(value);
+                if (node != null)
+                {
+                    // если найденный узел - это лист
+                    if (node.LeftChild == null && node.RightChild == null)
+                    {
+                        if (node.Value >= node.Parrent.Value) node.Parrent.RightChild = null;
+                        else node.Parrent.LeftChild = null;
+                        return;
+                    }
+                    // если найденный узел - это корень
+                    if (node == Root)
+                    {
+                        // нет левого потомка
+                        if (Root.LeftChild == null)
+                        {
+                            Root = Root.RightChild;
+                            return;
+                        }
+                        // нет правого потомка
+                        if (Root.RightChild == null)
+                        {
+                            Root = Root.LeftChild;
+                            return;
+                        }
+                        // есть оба потомка
+                        TreeNode tmp = Root.RightChild;
+                        // ищем самый левый лист у правого потомка
+                        while (tmp.LeftChild != null) tmp = tmp.LeftChild;
+                        
+                        tmp.LeftChild = Root.LeftChild;
+                        Root = Root.RightChild;
+                    }
+                    else
+                    {
+                        // если у найденного узла есть левый потомок
+                        if (node.LeftChild != null)
+                        {
+                            // ищем самый правый лист у левого потомка
+                            TreeNode tmp = node.LeftChild;
+                            while (tmp.RightChild != null) tmp = tmp.RightChild;
+                            // присваиваем правый потомок правому потомоку самого правого листа левого потомка
+                            tmp.RightChild = node.RightChild;
+                            node.RightChild.Parrent = tmp;
+                            node.LeftChild.Parrent = node.Parrent;
+                            if (node.Parrent.RightChild == node) node.Parrent.RightChild = node.LeftChild;
+                            else node.Parrent.LeftChild = node.LeftChild;
+
+                        }
+                        else
+                        {
+                            if (node.Parrent.RightChild == node) node.Parrent.RightChild = node.RightChild;
+                            else node.Parrent.LeftChild = node.RightChild;
+                            node.RightChild.Parrent = node.Parrent;
+                        }
+                    }
+
+                }
 
             }
         }
         static void Main(string[] args)
         {
             // 1. Протестируйте поиск строки в HashSet и в массиве
+            
             #region case1
 
             string str100 = String.Empty;
@@ -238,11 +324,68 @@ namespace Lesson4
                                 );
 
             Console.ReadLine();
-
+ 
             #endregion
-
+           
             // 2. Реализуйте двоичное дерево и метод вывода его в консоль
             #region case2
+            int[] arr = new int[] { 8, 3, 10, 1, 6, 9, 14, 4, 7, 12, 16, 11, 13, 15, 17};
+
+            Tree tree = new Tree();
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                tree.AddItem(arr[i]);
+            }
+
+            Console.Write("Исходное дерево: ");
+            tree.PrintTree();
+            Console.WriteLine($"\tRootValue = {tree.GetRoot().Value}");
+            Console.WriteLine();
+
+            int value = 17;
+            //удаление листа
+            Console.WriteLine($"Удаление листа с Value={value}");
+            tree.RemoveItem(value);
+            Console.Write("Перестроенное дерево: ");
+            tree.PrintTree();
+            Console.WriteLine();
+
+            value = 14;
+            // удаление узла
+            Console.WriteLine($"Удаление узла с Value={value}");
+            tree.RemoveItem(value);
+            Console.Write("Перестроенное дерево: ");
+            tree.PrintTree();
+            Console.WriteLine();
+
+            value = 4;
+            // удаление узла
+            Console.WriteLine($"Удаление листа с Value={value}");
+            tree.RemoveItem(value);
+            Console.Write("Перестроенное дерево: ");
+            tree.PrintTree();
+            Console.WriteLine();
+
+            value = 6;
+            // удаление узла
+            Console.WriteLine($"Удаление узла с Value={value}");
+            tree.RemoveItem(value);
+            Console.Write("Перестроенное дерево: ");
+            tree.PrintTree();
+            Console.WriteLine();
+
+            value = 8;
+            // удаление корня
+            Console.WriteLine($"\nУдаление корня с Value={value}");
+            tree.RemoveItem(value);
+            Console.Write("Перестроенное дерево: ");
+            tree.PrintTree();
+            Console.WriteLine($"\tRootValue = {tree.GetRoot().Value}");
+            Console.WriteLine();
+
+
+            Console.ReadLine();
 
             #endregion
         }
